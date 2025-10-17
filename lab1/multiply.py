@@ -10,7 +10,6 @@ from typing import cast
 from typing import overload
 
 import numpy as np
-import matplotlib.pyplot as plt
 import importlib
 import time
 import tracemalloc
@@ -144,7 +143,9 @@ class Matrix(MutableSequence[Row]):
         assert A.shape[1] == B.shape[0]
 
         package_name = ("generated_multiplications.m"
-                        + "_".join([str(A.shape[0]), str(B.shape[0]), str(B.shape[1])])
+                        + "_".join([str(A.shape[0]),
+                                    str(B.shape[0]),
+                                    str(B.shape[1])])
                         + "_generated")
         module = importlib.import_module(package_name)
         
@@ -258,6 +259,13 @@ def examples():
     e = Matrix(np.random.rand(16, 16))
     f = Matrix(np.random.rand(16, 16))
 
+    print(a)
+    print(b)
+    print(c)
+    print(d)
+    print(e)
+    print(f)
+
     print("Naive matrix multiplication:")
     
     OperationCounter.reset()
@@ -292,34 +300,9 @@ def examples():
     print(f"  e * f = {result}")
     print(f"  {OperationCounter.report()}")
 
-def plot_results(x, y1, y2, label1, label2, xlabel, ylabel, title):
-    plt.plot(x, y1, "o--", label=label1)
-    plt.plot(x, y2, "o--", label=label2)
-    plt.xscale("log", base=2)
-    plt.yscale("log", base=2)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.legend()
-    plt.title(title)
-    plt.show()
-
 def biggest():
     i = 2
-    ns = []
-    binet_stats = {
-        "time": [],
-        "additions": [],
-        "multiplications": [],
-        "memory": []
-    }
-    strassen_stats = {
-        "time": [],
-        "additions": [],
-        "multiplications": [],
-        "memory": []
-    }
-
-    while i <= 256:
+    while True:
         a = Matrix(np.random.rand(i, i))
         b = Matrix(np.random.rand(i, i))
 
@@ -369,28 +352,12 @@ def biggest():
 
         assert binet_result == recursive_binet_result == strassen_result
 
-        ns.append(i)
-        binet_stats["time"].append(recursive_binet_time)
-        binet_stats["additions"].append(recursive_binet_additions)
-        binet_stats["multiplications"].append(recursive_binet_multiplications)
-        binet_stats["memory"].append(recursive_binet_mem/1024)
-
-        strassen_stats["time"].append(strassen_time)
-        strassen_stats["additions"].append(strassen_additions)
-        strassen_stats["multiplications"].append(strassen_multiplications)
-        strassen_stats["memory"].append(strassen_mem/1024)
-
         print(i,
               binet_additions, binet_multiplications, binet_time, binet_mem,
               recursive_binet_additions, recursive_binet_multiplications, recursive_binet_time, recursive_binet_mem,
               strassen_additions, strassen_multiplications, strassen_time, strassen_mem,
               )
         i *= 2
-
-    plot_results(ns, binet_stats["time"], strassen_stats["time"], "Binet", "Strassen", "Matrix size (n x n)", "Time [s]", "Time comparison")
-    plot_results(ns, binet_stats["additions"], strassen_stats["additions"], "Binet", "Strassen", "Matrix size ($n x n$)", "Number of additions", "Addition comparison")
-    plot_results(ns, binet_stats["multiplications"], strassen_stats["multiplications"], "Binet", "Strassen", "Matrix size ($n x n$)", "Number of multiplications", "Multiplication comparison")
-    plot_results(ns, binet_stats["memory"], strassen_stats["memory"], "Binet", "Strassen", "Matrix size ($n x n$)", "Memory usage [KB]", "Memory usage comparison")
 
 def ai_test():
     from generated_multiplications.shapes import shapes
@@ -403,11 +370,7 @@ def ai_test():
         c = a.ai(b)
         end = time.monotonic()
         print(shape, end - start, OperationCounter.multiplications)
-        plt.scatter(max(shape), end-start, c="C0")
-    plt.xlabel("Matrix max n size")
-    plt.ylabel("Time [s]")
-    plt.title("AlphaTensor various sizes")
-    plt.show()
+
 
 if __name__ == "__main__":
     biggest()
