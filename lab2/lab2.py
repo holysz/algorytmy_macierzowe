@@ -1,0 +1,185 @@
+from __future__ import annotations
+
+from collections.abc import MutableSequence
+from itertools import chain
+from typing import Iterable
+from typing import Iterator
+from typing import NamedTuple
+from typing import TypeAlias
+from typing import cast
+from typing import overload
+
+import numpy as np
+import importlib
+import time
+import tracemalloc
+
+N: TypeAlias = int | float
+Row: TypeAlias = list[N]
+
+class OperationCounter:
+    additions = 0
+    multiplications = 0
+    
+    @classmethod
+    def reset(cls):
+        cls.additions = 0
+        cls.multiplications = 0
+    
+    @classmethod
+    def report(cls):
+        return f"Operations: {cls.multiplications} multiplications, {cls.additions} additions"
+
+
+class Matrix(MutableSequence[Row]):
+    def __init__(self, data: Iterable[Iterable[N]] | None = None) -> None:
+        if data is None:
+            self._data: list[Row] = []
+        else:
+            self._data = [list(row) for row in data]
+
+    @overload
+    def __getitem__(self, index: int) -> Row: ...
+    @overload
+    def __getitem__(self, index: slice) -> Matrix: ...
+
+    def __getitem__(self, index: int | slice) -> Row | Matrix:
+        if isinstance(index, slice):
+            return Matrix(self._data[index])
+        return self._data[index]
+
+    @overload
+    def __setitem__(self, index: int, value: Row) -> None: ...
+    @overload
+    def __setitem__(self, index: slice, value: Iterable[Row]) -> None: ...
+
+    def __setitem__(self, index: int | slice, value: Row | Iterable[Row]) -> None:
+        if isinstance(index, slice):
+            rows = [list(row) for row in cast(Iterable[Row], value)]
+            self._data[index] = rows
+        else:
+            if not isinstance(value, list):
+                raise TypeError("single row assignment requires a list of int or float")
+            self._data[index] = value
+
+    def __delitem__(self, index: int | slice) -> None:
+        del self._data[index]
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def insert(self, index: int, value: Row) -> None:
+        self._data.insert(index, value)
+
+    def __iter__(self) -> Iterator[Row]:
+        return iter(self._data)
+
+    def __repr__(self) -> str:
+        return f"Matrix({self._data!r})"
+    
+    def __repr__(self) -> str:
+        rounded_str = '\n          '.join([str([f"{x:.5f}" for x in row]) for row in self._data])
+        return rounded_str
+
+    @classmethod
+    def block(cls, blocks) -> Matrix:
+        m = Matrix()
+        for hblock in blocks:
+            for row in zip(*hblock):
+                m.append(list(chain.from_iterable(row)))
+
+        return m
+
+    def binet(self, b: Matrix) -> Matrix:
+        assert self.shape.cols == b.shape.rows
+        m = Matrix()
+        for row in self:
+            new_row = []
+            for c in range(len(b[0])):
+                col = [b[r][c] for r in range(len(b))]
+                dot_product = 0
+                for x, y in zip(row, col):
+                    OperationCounter.multiplications += 1
+                    product = x * y
+                    if dot_product != 0 or product != 0:
+                        OperationCounter.additions += 1
+                    dot_product += product
+                new_row.append(dot_product)
+            m.append(new_row)
+        return m
+    
+    def __matmul__(self, b: Matrix) -> Matrix:
+        return self.binet(b)
+
+    def __add__(self, b:Matrix) -> Matrix:
+        return self.add(b, True)
+    
+    def __addnocount__(self, b:Matrix) -> Matrix:
+        return self.add(b, False)
+
+    def add(self, b: Matrix, flag: bool) -> Matrix:
+        assert self.shape == b.shape
+        rows, cols = self.shape
+        result = Matrix()
+        for i in range(rows):
+            row = []
+            for j in range(cols):
+                if flag:
+                    OperationCounter.additions += 1
+                row.append(self[i][j] + b[i][j])
+            result.append(row)
+        return result
+
+    def __sub__(self, b: Matrix) -> Matrix:
+        assert self.shape == b.shape
+        rows, cols = self.shape
+        result = Matrix()
+        for i in range(rows):
+            row = []
+            for j in range(cols):
+                OperationCounter.additions += 1
+                row.append(self[i][j] - b[i][j])
+            result.append(row)
+        return result
+    
+    def __eq__(self, other:Matrix) -> bool:
+        rows, cols = self.shape
+        if self.shape != other.shape:
+            return False
+        
+        for i in range(rows):
+            for j in range(cols):
+                if abs(self[i][j] - other[i][j]) > 1e-9:
+                    return False
+        
+        return True
+
+    def round(self, ndigits: int | None = None) -> Matrix:
+        return Matrix([[round(i, ndigits) for i in row] for row in self])
+
+    @property
+    def shape(self) -> Shape:
+        cols = len(self[0]) if self else 0
+        return Shape(len(self), cols)
+
+    def inverse(self) -> Matrix:
+        #TODO
+        raise "Not implemented"
+
+    def gauss(self) -> Matrix:
+        #TODO
+        raise "Not implemented"
+
+    def lufac(self) -> tuple[Matrix, Matrix]:
+        #TODO
+        raise "Not implemented"
+
+    def det(self) -> N:
+        #TODO
+        raise "Not implemented"
+        
+
+
+class Shape(NamedTuple):
+    rows: int
+    cols: int
