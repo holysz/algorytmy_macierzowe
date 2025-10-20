@@ -340,12 +340,9 @@ def biggest():
         strassen_time = end - start
 
         if i < 5:
-            #OperationCounter.reset()
             start = time.monotonic()
             ai_result = a.ai(b)
             end = time.monotonic()
-            #ai_additions= OperationCounter.additions
-            #ai_multiplications = OperationCounter.multiplications
             ai_time = end - start
             
             assert binet_result == ai_result, (binet_result, ai_result)
