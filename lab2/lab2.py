@@ -166,9 +166,21 @@ class Matrix(MutableSequence[Row]):
     def shape(self) -> Shape:
         cols = len(self[0]) if self else 0
         return Shape(len(self), cols)
+    
+    
 
     def inverse(self) -> Matrix:
         assert self.shape.cols == self.shape.rows
+        def closest_power(n: int) -> int:
+            n -= 1
+            n |= n >> 1
+            n |= n >> 2
+            n |= n >> 4
+            n |= n >> 8
+            n |= n >> 16
+            n += 1
+            return n
+
         n = self.shape.rows
         if n == 1:
             assert self[0][0] != 0, "Can't inverse"
@@ -186,6 +198,17 @@ class Matrix(MutableSequence[Row]):
             inv = Matrix([[d / determ, -b / determ],
                         [-c / determ, a / determ]])
             return inv
+        
+        m = closest_power(n)
+        if m != n:
+            padded = Matrix([row[:] + [0]*(m-n) for row in self])
+            for _ in range(m-n):
+                padded.append([0]*m)
+            for i in range(n, m):
+                padded[i][i] = 1
+            padded_inv = padded.inverse()
+            trimmed = Matrix([row[:n] for row in padded_inv[:n]])
+            return trimmed
         
         p = n // 2
 
@@ -206,9 +229,47 @@ class Matrix(MutableSequence[Row]):
         return Matrix.block([[b11, b12], [b21, b22]])
 
 
-    def gauss(self) -> Matrix:
-        #TODO
-        raise "Not implemented"
+    def gauss(self, b: Matrix) -> tuple[Matrix, Matrix]:
+        assert self.shape.cols == self.shape.rows
+        assert self.shape.rows == b.shape.rows
+        n = self.shape.rows
+
+        p = n // 2
+
+        a11 = Matrix([r[:p] for r in self[:p]])
+        a12 = Matrix([r[p:] for r in self[:p]])
+        a21 = Matrix([r[:p] for r in self[p:]])
+        a22 = Matrix([r[p:] for r in self[p:]])
+        b1 = Matrix(r for r in b[:p])
+        b2 = Matrix(r for r in b[p:])
+
+        l11, u11 = a11.lufac()
+        l11_inv = l11.inverse()
+        u11_inv = u11.inverse()
+
+        s = a22 - a21.binet(u11_inv).binet(l11_inv).binet(a12)
+        ls, us = s.lufac()
+        
+        c11 = u11
+        c12 = l11_inv.binet(a12)
+        c22 = us
+
+        rhs1 = l11_inv.binet(b1)
+        ls_inv = ls.inverse()
+        rhs22 = ls_inv.binet(b2) - ls_inv.binet(a21).binet(u11_inv).binet(l11_inv).binet(b1)
+
+        LU = Matrix.block([[c11, c12], [zeros(c22.shape.rows), c22]])
+        rhs = Matrix.block([[rhs1], [rhs22]])
+
+        for i in range(LU.shape.rows):
+            factor = LU[i][i]
+            for j in range(LU.shape.cols):
+                LU[i][j] /= factor
+            for j in range(rhs.shape.cols):
+                rhs[i][j] /= factor
+
+        return LU, rhs
+
 
     def lufac(self) -> tuple[Matrix, Matrix]:
         rows, cols = self.shape
@@ -277,6 +338,17 @@ class Shape(NamedTuple):
     cols: int
 
 def biggest():
+    m = Matrix([[1, 2, -1, 1],
+            [-1, 1, 2, -1],
+            [2, -1, 2, 2],
+            [1, 1, -1, 2]])
+    b = Matrix([[6],
+                [3],
+                [14],
+                [8]])
+
+    print(m.gauss(b))
+
     i = 2
     while True:
         a = Matrix(np.random.rand(i, i))
