@@ -115,6 +115,9 @@ class Matrix(MutableSequence[Row]):
     
     def __addnocount__(self, b:Matrix) -> Matrix:
         return self.add(b, False)
+    
+    def __neg__(self) -> Matrix:
+        return Matrix([[-x for x in row] for row in self])
 
     def add(self, b: Matrix, flag: bool) -> Matrix:
         assert self.shape == b.shape
@@ -165,8 +168,39 @@ class Matrix(MutableSequence[Row]):
         return Shape(len(self), cols)
 
     def inverse(self) -> Matrix:
-        #TODO
-        raise "Not implemented"
+        assert self.shape.cols == self.shape.rows
+        n = self.shape.rows
+        if n == 1:
+            assert self[0][0] != 0, "Can't inverse"
+            return Matrix([[1/self[0][0]]])
+        if n == 2:
+            a, b = self[0]
+            c, d = self[1]
+            determ = a * d - b * c
+            assert determ != 0, "Can't inverse"
+
+            inv = Matrix([[d / determ, -b / determ],
+                        [-c / determ, a / determ]])
+            return inv
+        
+        p = n // 2
+
+        a11 = Matrix([r[:p] for r in self[:p]])
+        a12 = Matrix([r[p:] for r in self[:p]])
+        a21 = Matrix([r[:p] for r in self[p:]])
+        a22 = Matrix([r[p:] for r in self[p:]])
+
+        a11_inv = a11.inverse()
+        s22 = a22 - a21.binet(a11_inv).binet(a12)
+        s22_inv = s22.inverse()
+
+        b11 = a11_inv + a11_inv.binet(a12).binet(s22_inv).binet(a21).binet(a11_inv)
+        b12 = -a11_inv.binet(a12).binet(s22_inv)    
+        b21 = -s22_inv.binet(a21).binet(a11_inv)
+        b22 = s22_inv
+
+        return Matrix.block([[b11, b12], [b21, b22]])
+
 
     def gauss(self) -> Matrix:
         #TODO
@@ -187,12 +221,21 @@ class Matrix(MutableSequence[Row]):
         #TODO
         raise "Not implemented"
         
+<<<<<<< HEAD
 def id(n: int) -> Matrix:
     M = [[0] * n for _ in range(n)]
     for i in range(n):
         M[i][i] = 1
     return Matrix(M)
+=======
+>>>>>>> caa07b93097538e747a1eb80d975ee9df2b4f616
 
 class Shape(NamedTuple):
     rows: int
     cols: int
+
+m1 = Matrix([[1, 1, 1, 0], 
+             [0, 3, 1, 2],
+             [2, 3, 1, 0],
+             [1, 0, 2, 1]])
+print(m1.inverse())
