@@ -170,12 +170,16 @@ class Matrix(MutableSequence[Row]):
         n = self.shape.rows
         if n == 1:
             assert self[0][0] != 0, "Can't inverse"
+            OperationCounter.multiplications += 1
             return Matrix([[1/self[0][0]]])
         if n == 2:
             a, b = self[0]
             c, d = self[1]
             determ = a * d - b * c
             assert determ != 0, "Can't inverse"
+
+            OperationCounter.multiplications += 2
+            OperationCounter.additions += 1
 
             inv = Matrix([[d / determ, -b / determ],
                         [-c / determ, a / determ]])
