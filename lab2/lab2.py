@@ -200,7 +200,6 @@ class Matrix(MutableSequence[Row]):
             return inv
         
         m = closest_power(n)
-        m = closest_power(n)
         if m != n:
             padded = Matrix([row[:] + [0]*(m-n) for row in self])
             for _ in range(m-n):
@@ -325,19 +324,3 @@ def id(n: int) -> Matrix:
 class Shape(NamedTuple):
     rows: int
     cols: int
-
-m1 = Matrix([[1, 1, 1], 
-             [0, 3, 1],
-             [2, 3, 1]])
-print(m1.inverse())
-
-for i in range(2, 10):
-    m = Matrix(np.random.rand(2 ** i, 2 ** i))
-    l, u = m.lufac()
-    if l.binet(u) == m:
-        print(str(i) + " OK")
-    else:
-        print("ZLE")
-        print(m)
-        print(l)
-        print(u)
