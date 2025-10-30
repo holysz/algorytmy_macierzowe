@@ -258,17 +258,17 @@ class Matrix(MutableSequence[Row]):
         ls_inv = ls.inverse()
         rhs22 = ls_inv.binet(b2) - ls_inv.binet(a21).binet(u11_inv).binet(l11_inv).binet(b1)
 
-        LU = Matrix.block([[c11, c12], [zeros(c22.shape.rows), c22]])
+        c = Matrix.block([[c11, c12], [zeros(c22.shape.rows), c22]])
         rhs = Matrix.block([[rhs1], [rhs22]])
 
-        for i in range(LU.shape.rows):
-            factor = LU[i][i]
-            for j in range(LU.shape.cols):
-                LU[i][j] /= factor
+        for i in range(c.shape.rows):
+            factor = c[i][i]
+            for j in range(c.shape.cols):
+                c[i][j] /= factor
             for j in range(rhs.shape.cols):
                 rhs[i][j] /= factor
 
-        return LU, rhs
+        return c, rhs
 
 
     def lufac(self) -> tuple[Matrix, Matrix]:
@@ -370,10 +370,28 @@ def biggest():
         lufac_additions = OperationCounter.additions
         lufac_multiplications = OperationCounter.multiplications
         lufac_time = end - start
+
+        if i >= 4:
+            b = Matrix(np.random.rand(i, 1))
+            OperationCounter.reset()
+            start = time.monotonic()
+            c, rhs = a.gauss(b)
+            end = time.monotonic()
+            gauss_additions = OperationCounter.additions
+            gauss_multiplications = OperationCounter.multiplications
+            gauss_time = end - start
+            x = np.linalg.solve(c, rhs)
+            x = Matrix([[e] for e in x])
+            assert a @ x == b
+        else:
+            gauss_additions = None
+            gauss_multiplications = None
+            gauss_time = None
         
         print(i,
               inverse_additions, inverse_multiplications, inverse_time,
-              lufac_additions, lufac_multiplications, lufac_time
+              lufac_additions, lufac_multiplications, lufac_time,
+              gauss_additions, gauss_multiplications, gauss_time
               )
         i *= 2
 
