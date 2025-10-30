@@ -30,7 +30,6 @@ class OperationCounter:
     def report(cls):
         return f"Operations: {cls.multiplications} multiplications, {cls.additions} additions"
 
-
 class Matrix(MutableSequence[Row]):
     def __init__(self, data: Iterable[Iterable[N]] | None = None) -> None:
         if data is None:
@@ -156,6 +155,9 @@ class Matrix(MutableSequence[Row]):
                     return False
         
         return True
+    
+    def copy(self):
+        return type(self)(self._data)
 
     def round(self, ndigits: int | None = None) -> Matrix:
         return Matrix([[round(i, ndigits) for i in row] for row in self])
@@ -259,13 +261,66 @@ class Matrix(MutableSequence[Row]):
 
 
     def lufac(self) -> tuple[Matrix, Matrix]:
-        #TODO
-        raise "Not implemented"
+        rows, cols = self.shape
+        if rows != cols: raise "Macierz musi być kwadratowa"
+        
+        return self.recursive_lufac()
+
+    def recursive_lufac(self):
+        n = self.shape.rows
+        if n == 1:
+            return Matrix([[0]]), self
+
+        if n == 2:
+            a11 = self[0][0]
+            a12 = self[0][1]
+            a21 = self[1][0]
+            a22 = self[1][1]
+            L = id(2)
+            L[1][0] = a21 / a11
+
+            u11 = a11
+            u12 = a12
+            u22 = a22 - a21 * a12 / a11
+
+            return L, Matrix([[u11, u12], [0, u22]])
+        
+        p = n // 2
+
+        a11 = Matrix([r[:p] for r in self[:p]])
+        a12 = Matrix([r[p:] for r in self[:p]])
+        a21 = Matrix([r[:p] for r in self[p:]])
+        a22 = Matrix([r[p:] for r in self[p:]])
+        
+        l11, u11 = a11.recursive_lufac()
+        u11i = u11.inverse()
+        l21 = a21.binet(u11i)
+        l11i = l11.inverse()
+        u12 = l11i.binet(a12)
+        l22 = a22 - a21.binet(u11i).binet(l11i).binet(a12)
+        l22, u22  = l22.recursive_lufac()
+
+        L = Matrix.block([[l11, zeros(p)], [l21, l22]])
+        U = Matrix.block([[u11, u12], [zeros(p), u22]])
+
+        return L, U
 
     def det(self) -> N:
-        #TODO
-        raise "Not implemented"
+        _, U = self.lufac()
+        result = 1
+        for i in range(U.shape.rows):
+            result *= U[i][i]
+        return result
         
+def zeros(n:int) -> Matrix:
+    return Matrix([[0] * n for _ in range(n)])
+
+def id(n: int) -> Matrix:
+    M = zeros(n)
+    for i in range(n):
+        M[i][i] = 1
+    return M
+
 
 class Shape(NamedTuple):
     rows: int
@@ -275,3 +330,14 @@ m1 = Matrix([[1, 1, 1],
              [0, 3, 1],
              [2, 3, 1]])
 print(m1.inverse())
+
+for i in range(2, 10):
+    m = Matrix(np.random.rand(2 ** i, 2 ** i))
+    l, u = m.lufac()
+    if l.binet(u) == m:
+        print(str(i) + " OK")
+    else:
+        print("ZLE")
+        print(m)
+        print(l)
+        print(u)
