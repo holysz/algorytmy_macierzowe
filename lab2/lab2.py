@@ -276,6 +276,37 @@ class Shape(NamedTuple):
     rows: int
     cols: int
 
+def biggest():
+    i = 2
+    while True:
+        a = Matrix(np.random.rand(i, i))
+        b = Matrix(np.random.rand(i, i))
+
+        OperationCounter.reset()   
+        start = time.monotonic()
+        ai = a.inverse()
+        end = time.monotonic()
+        inverse_additions = OperationCounter.additions
+        inverse_multiplications = OperationCounter.multiplications
+        inverse_time = end - start
+
+        OperationCounter.reset()   
+        start = time.monotonic()
+        l, u = a.lufac()
+        assert l @ u == a
+        end = time.monotonic()
+        lufac_additions = OperationCounter.additions
+        lufac_multiplications = OperationCounter.multiplications
+        lufac_time = end - start
+        
+        print(i,
+              inverse_additions, inverse_multiplications, inverse_time,
+              lufac_additions, lufac_multiplications, lufac_time
+              )
+        i *= 2
+
+biggest()
+'''
 m1 = Matrix([[1, 1, 1, 0], 
              [0, 3, 1, 2],
              [2, 3, 1, 0],
@@ -292,3 +323,4 @@ for i in range(2, 10):
         print(m)
         print(l)
         print(u)
+'''
