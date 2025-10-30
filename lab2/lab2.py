@@ -30,7 +30,6 @@ class OperationCounter:
     def report(cls):
         return f"Operations: {cls.multiplications} multiplications, {cls.additions} additions"
 
-
 class Matrix(MutableSequence[Row]):
     def __init__(self, data: Iterable[Iterable[N]] | None = None) -> None:
         if data is None:
@@ -153,6 +152,9 @@ class Matrix(MutableSequence[Row]):
                     return False
         
         return True
+    
+    def copy(self):
+        return type(self)(self._data)
 
     def round(self, ndigits: int | None = None) -> Matrix:
         return Matrix([[round(i, ndigits) for i in row] for row in self])
@@ -171,14 +173,25 @@ class Matrix(MutableSequence[Row]):
         raise "Not implemented"
 
     def lufac(self) -> tuple[Matrix, Matrix]:
-        #TODO
-        raise "Not implemented"
+        rows, cols = self.shape
+        if rows != cols: raise "Macierz musi być kwadratowa"
+        n = rows
+        L = id(n)
+        U = self.copy()
+
+        #niedokonczone
+        
+        return (L, U)
 
     def det(self) -> N:
         #TODO
         raise "Not implemented"
         
-
+def id(n: int) -> Matrix:
+    M = [[0] * n for _ in range(n)]
+    for i in range(n):
+        M[i][i] = 1
+    return Matrix(M)
 
 class Shape(NamedTuple):
     rows: int
