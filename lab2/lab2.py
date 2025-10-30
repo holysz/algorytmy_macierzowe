@@ -229,7 +229,7 @@ class Matrix(MutableSequence[Row]):
         return Matrix.block([[b11, b12], [b21, b22]])
 
 
-    def gauss(self, b: Matrix) -> Matrix:
+    def gauss(self, b: Matrix) -> tuple[Matrix, Matrix]:
         assert self.shape.cols == self.shape.rows
         assert self.shape.rows == b.shape.rows
         n = self.shape.rows
@@ -243,7 +243,7 @@ class Matrix(MutableSequence[Row]):
         b1 = Matrix(r for r in b[:p])
         b2 = Matrix(r for r in b[p:])
 
-        l11, u11 = self.lufac()
+        l11, u11 = a11.lufac()
         l11_inv = l11.inverse()
         u11_inv = u11.inverse()
 
@@ -257,6 +257,18 @@ class Matrix(MutableSequence[Row]):
         rhs1 = l11_inv.binet(b1)
         ls_inv = ls.inverse()
         rhs22 = ls_inv.binet(b2) - ls_inv.binet(a21).binet(u11_inv).binet(l11_inv).binet(b1)
+
+        LU = Matrix.block([[c11, c12], [zeros(c22.shape.rows), c22]])
+        rhs = Matrix.block([[rhs1], [rhs22]])
+
+        for i in range(LU.shape.rows):
+            factor = LU[i][i]
+            for j in range(LU.shape.cols):
+                LU[i][j] /= factor
+            for j in range(rhs.shape.cols):
+                rhs[i][j] /= factor
+
+        return LU, rhs
 
 
     def lufac(self) -> tuple[Matrix, Matrix]:
@@ -326,6 +338,17 @@ class Shape(NamedTuple):
     cols: int
 
 def biggest():
+    m = Matrix([[1, 2, -1, 1],
+            [-1, 1, 2, -1],
+            [2, -1, 2, 2],
+            [1, 1, -1, 2]])
+    b = Matrix([[6],
+                [3],
+                [14],
+                [8]])
+
+    print(m.gauss(b))
+
     i = 2
     while True:
         a = Matrix(np.random.rand(i, i))
