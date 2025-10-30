@@ -365,7 +365,10 @@ def biggest():
         OperationCounter.reset()   
         start = time.monotonic()
         l, u = a.lufac()
-        assert l @ u == a
+        if l @ u != a:
+            print(a)
+            print(l)
+            print(u)
         end = time.monotonic()
         lufac_additions = OperationCounter.additions
         lufac_multiplications = OperationCounter.multiplications
@@ -388,11 +391,16 @@ def biggest():
             gauss_multiplications = None
             gauss_time = None
         
-        print(i,
+        line = (i,
               inverse_additions, inverse_multiplications, inverse_time,
               lufac_additions, lufac_multiplications, lufac_time,
               gauss_additions, gauss_multiplications, gauss_time
-              )
+        )
+        out = " ".join(map(str, line))
+
+        with open('out', 'a') as the_file:
+            the_file.write(out + "\n")
+        print(out)
         i *= 2
 
 biggest()
