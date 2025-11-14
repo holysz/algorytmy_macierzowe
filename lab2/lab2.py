@@ -78,7 +78,7 @@ class Matrix(MutableSequence[Row]):
     
     def __repr__(self) -> str:
         rounded_str = '\n          '.join([str([f"{x:.5f}" for x in row]) for row in self._data])
-        return rounded_str
+        return '          ' + rounded_str
 
     @classmethod
     def block(cls, blocks) -> Matrix:
@@ -403,7 +403,31 @@ def biggest():
         print(out)
         i *= 2
 
-biggest()
+def demo():
+    i = 4
+    a = Matrix(np.random.rand(i, i))
+    b = Matrix(np.random.rand(i, 1))
+    print("A:\n")
+    print(a)
+    print("\nB:\n")
+    print(b)
+    print("\nA⁻¹ :\n")
+    print(a.inverse())
+    print("\nGauss( A ):\nC:")
+    c, rhs = a.gauss(b)
+    print(c)
+    print("R:")
+    print(rhs)
+    print()
+    print("\nLU( A ):\nL:")
+    l, u = a.lufac()
+    print(l)
+    print("U:")
+    print(u)
+    print("\ndet( A )\n")
+    print(a.det())
+
+demo()
 '''
 m1 = Matrix([[1, 1, 1, 0], 
              [0, 3, 1, 2],
