@@ -1,5 +1,5 @@
 from matrix import Matrix, zeros
-from tree import Node, Tree
+from tree import Node
 import numpy as np
 
 def power_iteration(M, max_iter=1000, eps=1e-8):

@@ -1,5 +1,6 @@
 import numpy as np
 from matrix import Matrix
+import lab3
 
 class Node:
     def __init__(self, rank, size, U=None, V=None, D=None):
@@ -10,9 +11,6 @@ class Node:
         self.D = D
         self.children = []
 
-def truncatedSVD(A, r, eps):
-    raise "UNIMPLEMENTED"
-    
 def CompressMatrix(A, U, D, V, r, eps):
     significant_singular_values = D[D > eps]
     rank = min(rank, len(significant_singular_values))
@@ -26,7 +24,7 @@ def rebuild_matrix(node):
                       np.hstack((rebuild_matrix(node.children[2]), rebuild_matrix(node.children[3]))))))
 
 def create_tree(A, rank, eps=1e-10, min_size=2):
-    U, D, V = truncatedSVD(A, rank + 1, eps)
+    U, D, V = lab3.truncated_svd(A, rank + 1, eps)
 
     if min(A.shape) <= min_size or D[rank] <= eps:
         root = CompressMatrix(A, U, D, V, rank, eps)
