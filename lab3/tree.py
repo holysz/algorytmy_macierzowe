@@ -85,27 +85,31 @@ def create_tree(A, rank, eps=1e-10, min_size=2):
 
     return root
 
-def test(img):
+def test(img, max_rank, eps):
+    img = np.asarray(img) / 255
     r = img[:, :, 0]
     g = img[:, :, 1]
     b = img[:, :, 2]
-
+    
+    plt.figure(figsize=(16,8))
     plt.subplot(2, 4, 1).imshow(img, cmap='gray')
     plt.subplot(2, 4, 2).imshow(r, cmap='gray')
     plt.subplot(2, 4, 3).imshow(g, cmap='gray')
     plt.subplot(2, 4, 4).imshow(b, cmap='gray')
 
-    tree = create_tree(r, 2, 100)
-    r_res = rebuild_matrix(tree)
+    tree = create_tree(r, max_rank, eps)
+    r_res = rebuild_matrix(tree).clip(0, 1)
     plt.subplot(2, 4, 6).imshow(r_res, cmap='gray')
-    tree = create_tree(g, 2, 100)
-    g_res = rebuild_matrix(tree)
+    tree = create_tree(g, max_rank, eps)
+    g_res = rebuild_matrix(tree).clip(0, 1)
     plt.subplot(2, 4, 7).imshow(g_res, cmap='gray')
-    tree = create_tree(b, 2, 100)
-    b_res = rebuild_matrix(tree)
+    tree = create_tree(b, max_rank, eps)
+    b_res = rebuild_matrix(tree).clip(0, 1)
     plt.subplot(2, 4, 8).imshow(b_res, cmap='gray')
     img_res = np.dstack((r_res, g_res, b_res))
     plt.subplot(2, 4, 5).imshow(img_res, cmap='gray')
+
+    
     plt.show()
 
-test(coffee())
+test(astronaut(), 4, 0.05)
