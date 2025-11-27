@@ -13,8 +13,8 @@ class Node:
 
 def CompressMatrix(A, U, D, V, r, eps):
     significant_singular_values = D[D > eps]
-    rank = min(rank, len(significant_singular_values))
-    return Node(r, A.shape, U=U[:, :rank], V=V[:rank, :], D=D[:rank])
+    rank = min(r, len(significant_singular_values))
+    return Node(rank, A.shape, U=U[:, :rank], V=V[:rank, :], D=D[:rank])
 
 def rebuild_matrix(node):
     if not node.children:
