@@ -13,8 +13,10 @@ class Node:
 def truncatedSVD(A, r, eps):
     raise "UNIMPLEMENTED"
     
-def CompressMatrix(A, U, D, V, r):
-    raise "UNIMPLEMENTED"
+def CompressMatrix(A, U, D, V, r, eps):
+    significant_singular_values = D[D > eps]
+    rank = min(rank, len(significant_singular_values))
+    return Node(r, A.shape, U=U[:, :rank], V=V[:rank, :], D=D[:rank])
 
 def rebuild_matrix(node):
     if not node.children:
@@ -23,19 +25,11 @@ def rebuild_matrix(node):
     return np.vstack((np.hstack((rebuild_matrix(node.children[0]), rebuild_matrix(node.children[1])),
                       np.hstack((rebuild_matrix(node.children[2]), rebuild_matrix(node.children[3]))))))
 
-def error(original, root):
-    compressed = rebuild_matrix(root)
-    return np.linalg.norm(original - compressed, ord='fro') / np.linalg.norm(original, ord='fro')
-
-def error(original, U, S, V):
-    compressed = U @ S @ V
-    return np.linalg.norm(original - compressed, ord='fro') / np.linalg.norm(original, ord='fro')
-
 def create_tree(A, rank, eps=1e-10, min_size=2):
     U, D, V = truncatedSVD(A, rank + 1, eps)
 
     if min(A.shape) <= min_size or D[rank] <= eps:
-        root = CompressMatrix(A, U, D, V, rank)
+        root = CompressMatrix(A, U, D, V, rank, eps)
     else:
         root = Node(0, A.shape)
         mid_row = A.shape[0] // 2
