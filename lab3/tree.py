@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matrix import Matrix
-from skimage.data import astronaut, coffee
+from PIL import Image
 
 def power_iteration(M, max_iter=1000, eps=1e-8):
     v = np.random.rand(M.shape[1])
@@ -34,7 +33,7 @@ def truncated_svd(M, r, eps):
         D[rank] = singular
 
         V[:, rank] = eigvec
-        U[:, rank] = M @ eigvec / eigval
+        U[:, rank] = M @ eigvec / singular
 
         A -= eigval * np.outer(eigvec, eigvec)
 
@@ -49,11 +48,34 @@ class Node:
         self.V = V
         self.D = D
         self.children = []
+    
+    def draw_compression(self, matrix, x_bounds=None, y_bounds=None):
+        if x_bounds is None or y_bounds is None:
+            x_bounds=(0, self.size[0])
+            y_bounds=(0, self.size[1])
+        if len(self.children) == 0:
+            matrix[x_bounds[0] : x_bounds[1], y_bounds[0] : (y_bounds[0] + self.rank)] = 0
+            matrix[x_bounds[0] : (x_bounds[0] + self.rank), y_bounds[0] :y_bounds[1]] = 0
+            return
+        
+        x_mid = (x_bounds[0] + x_bounds[1]) // 2
+        y_mid = (y_bounds[0] + y_bounds[1]) // 2
+        self.children[0].draw_compression(matrix, (x_bounds[0], x_mid), (y_bounds[0], y_mid))
+        self.children[1].draw_compression(matrix, (x_bounds[0], x_mid), (y_mid, y_bounds[1]))
+        self.children[2].draw_compression(matrix, (x_mid, x_bounds[1]), (y_bounds[0], y_mid))
+        self.children[3].draw_compression(matrix, (x_mid, x_bounds[1]), (y_mid, y_bounds[1]))
+
 
 def CompressMatrix(A, U, D, V, r, eps):
-    significant_singular_values = D[D > eps]
-    rank = min(r, len(significant_singular_values))
-    return Node(rank, A.shape, U=U[:, :rank], V=V[:rank, :], D=D[:rank])
+    significant = D > eps
+    rank = min(r, significant.sum())
+
+    U_c = U[:, :rank]
+    D_c = D[:rank]
+    V_c = V[:rank, :]
+
+    return Node(rank, A.shape, U=U_c, V=V_c, D=D_c)
+
 
 def rebuild_matrix(node):
     if not node.children:
@@ -85,31 +107,53 @@ def create_tree(A, rank, eps=1e-10, min_size=2):
 
     return root
 
-def test(img, max_rank, eps):
-    img = np.asarray(img) / 255
+def test(img):
     r = img[:, :, 0]
     g = img[:, :, 1]
     b = img[:, :, 2]
-    
-    plt.figure(figsize=(16,8))
-    plt.subplot(2, 4, 1).imshow(img, cmap='gray')
-    plt.subplot(2, 4, 2).imshow(r, cmap='gray')
-    plt.subplot(2, 4, 3).imshow(g, cmap='gray')
-    plt.subplot(2, 4, 4).imshow(b, cmap='gray')
 
-    tree = create_tree(r, max_rank, eps)
-    r_res = rebuild_matrix(tree).clip(0, 1)
-    plt.subplot(2, 4, 6).imshow(r_res, cmap='gray')
-    tree = create_tree(g, max_rank, eps)
-    g_res = rebuild_matrix(tree).clip(0, 1)
-    plt.subplot(2, 4, 7).imshow(g_res, cmap='gray')
-    tree = create_tree(b, max_rank, eps)
-    b_res = rebuild_matrix(tree).clip(0, 1)
-    plt.subplot(2, 4, 8).imshow(b_res, cmap='gray')
-    img_res = np.dstack((r_res, g_res, b_res))
-    plt.subplot(2, 4, 5).imshow(img_res, cmap='gray')
+    plt.subplot(4, 4, 1).imshow(img)
+    plt.subplot(4, 4, 2).imshow(r, cmap='Reds')
+    plt.subplot(4, 4, 3).imshow(g, cmap='Greens')
+    plt.subplot(4, 4, 4).imshow(b, cmap='Blues')
+    max_rank = 100
+    epsilon = 1
 
-    
+    tree = create_tree(r, 1, eps=epsilon)
+    r_res = rebuild_matrix(tree)
+    r_mat = np.ones(r.shape)
+    tree.draw_compression(r_mat)
+    plt.subplot(4, 4, 10).imshow(r_mat)
+    plt.subplot(4, 4, 6).imshow(r_res, cmap='Reds')
+    tree = create_tree(g, 1, eps=epsilon)
+    g_res = rebuild_matrix(tree)
+    g_mat = np.ones(g.shape)
+    tree.draw_compression(g_mat)
+    plt.subplot(4, 4, 11).imshow(g_mat)
+    plt.subplot(4, 4, 7).imshow(g_res, cmap='Greens')
+    tree = create_tree(b, 1, eps=epsilon)
+    b_res = rebuild_matrix(tree)
+    b_mat = np.ones(b.shape)
+    tree.draw_compression(b_mat)
+    plt.subplot(4, 4, 12).imshow(b_mat)
+    plt.subplot(4, 4, 8).imshow(b_res, cmap='Blues')
+    img_res = np.stack((r_res.clip(0,1), g_res.clip(0,1), b_res.clip(0,1)), axis=-1)
+    plt.subplot(4, 4, 5).imshow(img_res)
+
+    _, rS, _ = truncated_svd(r, max_rank, epsilon)
+    _, rG, _ = truncated_svd(g, max_rank, epsilon)
+    _, rB, _ = truncated_svd(b, max_rank, epsilon)    
+    plt.subplot(4,4,14).bar(range(1, len(rS)+1), rS, color='red')
+    plt.subplot(4,4,15).bar(range(1, len(rG)+1), rG, color='green')
+    plt.subplot(4,4,16).bar(range(1, len(rB)+1), rB, color='blue')
+
     plt.show()
 
-test(astronaut(), 4, 0.05)
+    print(r_res)
+    print(img_res)
+
+img = Image.open("lab3/coffee.png")
+img = img.convert('RGB')
+
+coffee = np.asarray(img) / 255
+test(coffee)
