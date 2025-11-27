@@ -46,3 +46,12 @@ def create_tree(A, rank, eps=1e-10, min_size=2):
 
     return root
 
+def rebuild_matrix(node):
+    if node.children == []:
+        return node.U @ np.diag(node.D) @ node.V
+    top_left = rebuild_matrix(node.children[0])
+    top_right = rebuild_matrix(node.children[1])
+    bottom_left = rebuild_matrix(node.children[2])
+    bottom_right = rebuild_matrix(node.children[3])
+    return np.vstack((np.hstack((top_left, top_right)),
+                      np.hstack((bottom_left, bottom_right))))
