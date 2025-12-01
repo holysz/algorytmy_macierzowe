@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+from skimage.color import rgb2hsv, hsv2rgb
 
 def power_iteration(M, max_iter=1000, eps=1e-8):
     v = np.random.rand(M.shape[1])
@@ -54,8 +55,8 @@ class Node:
             x_bounds=(0, self.size[0])
             y_bounds=(0, self.size[1])
         if len(self.children) == 0:
-            matrix[x_bounds[0] : x_bounds[1], y_bounds[0] : (y_bounds[0] + self.rank)] = 0
-            matrix[x_bounds[0] : (x_bounds[0] + self.rank), y_bounds[0] :y_bounds[1]] = 0
+            matrix[x_bounds[0] : x_bounds[1], y_bounds[0] : (y_bounds[0] + self.rank*2)] = 0
+            matrix[x_bounds[0] : (x_bounds[0] + self.rank*2), y_bounds[0] :y_bounds[1]] = 0
             return
         
         x_mid = (x_bounds[0] + x_bounds[1]) // 2
@@ -107,53 +108,172 @@ def create_tree(A, rank, eps=1e-10, min_size=2):
 
     return root
 
-def test(img):
+def test_rgb(img, max_rank, epsilon):
     r = img[:, :, 0]
     g = img[:, :, 1]
     b = img[:, :, 2]
 
-    plt.subplot(4, 4, 1).imshow(img)
-    plt.subplot(4, 4, 2).imshow(r, cmap='Reds')
-    plt.subplot(4, 4, 3).imshow(g, cmap='Greens')
-    plt.subplot(4, 4, 4).imshow(b, cmap='Blues')
-    max_rank = 100
-    epsilon = 1
+    plt.suptitle(rf"Kompresja kanałów RGB, $max\_rank: {max_rank}$, $\epsilon: {epsilon}$")
+    plt.axis('off')
+    plt.subplots_adjust(wspace=0.3)
 
-    tree = create_tree(r, 1, eps=epsilon)
+    plt.subplot(4, 4, 1).imshow(img)
+    plt.title("Oryginał")
+    plt.axis('off')
+    plt.subplot(4, 4, 2).imshow(r, cmap='Reds_r')
+    plt.title("R")
+    plt.axis('off')
+    plt.subplot(4, 4, 3).imshow(g, cmap='Greens_r')
+    plt.title("G")
+    plt.axis('off')
+    plt.subplot(4, 4, 4).imshow(b, cmap='Blues_r')
+    plt.title("B")
+    plt.axis('off')
+
+    tree = create_tree(r, max_rank, eps=epsilon)
     r_res = rebuild_matrix(tree)
     r_mat = np.ones(r.shape)
     tree.draw_compression(r_mat)
     plt.subplot(4, 4, 10).imshow(r_mat)
-    plt.subplot(4, 4, 6).imshow(r_res, cmap='Reds')
-    tree = create_tree(g, 1, eps=epsilon)
+    plt.title("Macierz kompresji R")
+    plt.axis('off')
+    plt.subplot(4, 4, 6).imshow(r_res, cmap='Reds_r')
+    plt.title("R")
+    plt.axis('off')
+
+    tree = create_tree(g, max_rank, eps=epsilon)
     g_res = rebuild_matrix(tree)
     g_mat = np.ones(g.shape)
     tree.draw_compression(g_mat)
     plt.subplot(4, 4, 11).imshow(g_mat)
-    plt.subplot(4, 4, 7).imshow(g_res, cmap='Greens')
-    tree = create_tree(b, 1, eps=epsilon)
+    plt.title("Macierz kompresji G")
+    plt.axis('off')
+    plt.subplot(4, 4, 7).imshow(g_res, cmap='Greens_r')
+    plt.title("G")
+    plt.axis('off')
+
+    tree = create_tree(b, max_rank, eps=epsilon)
     b_res = rebuild_matrix(tree)
     b_mat = np.ones(b.shape)
     tree.draw_compression(b_mat)
     plt.subplot(4, 4, 12).imshow(b_mat)
-    plt.subplot(4, 4, 8).imshow(b_res, cmap='Blues')
+    plt.title("Macierz kompresji B")
+    plt.axis('off')
+    plt.subplot(4, 4, 8).imshow(b_res, cmap='Blues_r')
+    plt.title("B")
+    plt.axis('off')
+    
     img_res = np.stack((r_res.clip(0,1), g_res.clip(0,1), b_res.clip(0,1)), axis=-1)
     plt.subplot(4, 4, 5).imshow(img_res)
+    plt.title("Skompresowany obraz")
+    plt.axis('off')
 
     _, rS, _ = truncated_svd(r, max_rank, epsilon)
     _, rG, _ = truncated_svd(g, max_rank, epsilon)
     _, rB, _ = truncated_svd(b, max_rank, epsilon)    
     plt.subplot(4,4,14).bar(range(1, len(rS)+1), rS, color='red')
+    plt.title("Wartości osobliwe kanału R")
+    plt.xlabel("Indeks $k$ wartości osobliwej")
+    plt.ylabel(r"$\sigma_k$")
+    plt.xticks(range(1, len(rS)+1))
     plt.subplot(4,4,15).bar(range(1, len(rG)+1), rG, color='green')
+    plt.title("Wartości osobliwe kanału G")
+    plt.xlabel("Indeks $k$ wartości osobliwej")
+    plt.ylabel(r"$\sigma_k$")
+    plt.xticks(range(1, len(rG)+1))
     plt.subplot(4,4,16).bar(range(1, len(rB)+1), rB, color='blue')
+    plt.title("Wartości osobliwe kanału B")
+    plt.xlabel("Indeks $k$ wartości osobliwej")
+    plt.ylabel(r"$\sigma_k$")
+    plt.xticks(range(1, len(rB)+1))
 
     plt.show()
 
-    print(r_res)
-    print(img_res)
+
+def test_hsv(img, max_rank, epsilon):
+    hsv = rgb2hsv(img)
+    h = hsv[:, :, 0]
+    s = hsv[:, :, 1]
+    v = hsv[:, :, 2]
+
+    plt.suptitle(rf"Kompresja kanałów HSV, $max\_rank: {max_rank}$, $\epsilon: {epsilon}$")
+    plt.axis('off')
+    plt.subplots_adjust(wspace=0.3)
+
+    plt.subplot(4, 4, 1).imshow(img)
+    plt.title("Oryginał")
+    plt.axis('off')
+    plt.subplot(4, 4, 2).imshow(h, cmap='hsv', vmin=0, vmax=1)
+    plt.title("H")
+    plt.axis('off')
+    plt.subplot(4, 4, 3).imshow(s, cmap='gray', vmin=0, vmax=1)
+    plt.title("S")
+    plt.axis('off')
+    plt.subplot(4, 4, 4).imshow(v, cmap='gray', vmin=0, vmax=1)
+    plt.title("V")
+    plt.axis('off')
+
+    tree = create_tree(h, max_rank, eps=epsilon)
+    h_res = rebuild_matrix(tree)
+    h_mat = np.ones(h.shape)
+    tree.draw_compression(h_mat)
+    plt.subplot(4, 4, 10).imshow(h_mat)
+    plt.title("Macierz kompresji H")
+    plt.axis('off')
+    plt.subplot(4, 4, 6).imshow(h_res, cmap='hsv', vmin=0, vmax=1)
+    plt.title("H")
+    plt.axis('off')
+
+    tree = create_tree(s, max_rank, eps=epsilon)
+    s_res = rebuild_matrix(tree)
+    s_mat = np.ones(s.shape)
+    tree.draw_compression(s_mat)
+    plt.subplot(4, 4, 11).imshow(s_mat)
+    plt.title("Macierz kompresji S")
+    plt.axis('off')
+    plt.subplot(4, 4, 7).imshow(s_res, cmap='gray', vmin=0, vmax=1)
+    plt.title("S")
+    plt.axis('off')
+
+    tree = create_tree(v, max_rank, eps=epsilon)
+    v_res = rebuild_matrix(tree)
+    v_mat = np.ones(v.shape)
+    tree.draw_compression(v_mat)
+    plt.subplot(4, 4, 12).imshow(v_mat)
+    plt.title("Macierz kompresji V")
+    plt.axis('off')
+    plt.subplot(4, 4, 8).imshow(v_res, cmap='gray', vmin=0, vmax=1)
+    plt.title("V")
+    plt.axis('off')
+
+    img_res = np.stack((h_res.clip(0,1), s_res.clip(0,1), v_res.clip(0,1)), axis=-1)
+    img_res = hsv2rgb(img_res)
+    plt.subplot(4, 4, 5).imshow(img_res, vmin=0, vmax=1)
+    plt.title("Skompresowany obraz")
+    plt.axis('off')
+
+    _, rH, _ = truncated_svd(h, max_rank, epsilon)
+    _, rS, _ = truncated_svd(s, max_rank, epsilon)
+    _, rV, _ = truncated_svd(v, max_rank, epsilon)    
+    plt.subplot(4,4,14).bar(range(1, len(rH)+1), rH)
+    plt.title("Wartości osobliwe kanału H")
+    plt.xlabel("Indeks $k$ wartości osobliwej")
+    plt.ylabel(r"$\sigma_k$")
+    plt.xticks(range(1, len(rS)+1))
+    plt.subplot(4,4,15).bar(range(1, len(rS)+1), rS)
+    plt.title("Wartości osobliwe kanału S")
+    plt.xlabel("Indeks $k$ wartości osobliwej")
+    plt.ylabel(r"$\sigma_k$")
+    plt.xticks(range(1, len(rS)+1))
+    plt.subplot(4,4,16).bar(range(1, len(rV)+1), rV)
+    plt.title("Wartości osobliwe kanału R")
+    plt.xlabel("Indeks $k$ wartości osobliwej")
+    plt.ylabel(r"$\sigma_k$")
+    plt.xticks(range(1, len(rS)+1))
+    plt.show()
 
 img = Image.open("lab3/coffee.png")
 img = img.convert('RGB')
 
 coffee = np.asarray(img) / 255
-test(coffee)
+test_hsv(coffee, 5, 2)
