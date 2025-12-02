@@ -42,7 +42,7 @@ def truncated_svd(M, r, eps):
 
 
 class Node:
-    def __init__(self, rank, size, U=None, V=None, D=None):
+    def __init__(self, rank, size, U=None, D=None, V=None):
         self.rank = rank
         self.size = size
         self.U = U
@@ -67,7 +67,7 @@ class Node:
         self.children[3].draw_compression(matrix, (x_mid, x_bounds[1]), (y_mid, y_bounds[1]))
 
 
-def CompressMatrix(A, U, D, V, r, eps):
+def compress_matrix(A, U, D, V, r, eps):
     significant = D > eps
     rank = min(r, significant.sum())
 
@@ -75,7 +75,7 @@ def CompressMatrix(A, U, D, V, r, eps):
     D_c = D[:rank]
     V_c = V[:rank, :]
 
-    return Node(rank, A.shape, U=U_c, V=V_c, D=D_c)
+    return Node(rank, A.shape, U_c, D_c, V_c)
 
 
 def rebuild_matrix(node):
@@ -89,7 +89,7 @@ def create_tree(A, rank, eps=1e-10, min_size=2):
     U, D, V = truncated_svd(A, rank + 1, eps)
 
     if min(A.shape) <= min_size or D[rank] <= eps:
-        root = CompressMatrix(A, U, D, V, rank, eps)
+        root = compress_matrix(A, U, D, V, rank, eps)
     else:
         root = Node(0, A.shape)
         mid_row = A.shape[0] // 2
