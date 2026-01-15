@@ -55,8 +55,8 @@ class Node:
             x_bounds=(0, self.size[0])
             y_bounds=(0, self.size[1])
         if len(self.children) == 0:
-            matrix[x_bounds[0] : x_bounds[1], y_bounds[0] : (y_bounds[0] + self.rank*2)] = 0
-            matrix[x_bounds[0] : (x_bounds[0] + self.rank*2), y_bounds[0] :y_bounds[1]] = 0
+            matrix[x_bounds[0] : x_bounds[1], y_bounds[0] : (y_bounds[0] + self.rank)] = 0
+            matrix[x_bounds[0] : (x_bounds[0] + self.rank), y_bounds[0] :y_bounds[1]] = 0
             return
         
         x_mid = (x_bounds[0] + x_bounds[1]) // 2
