@@ -2,25 +2,24 @@ from lab3.tree import Node, compress_matrix, truncated_svd, rebuild_matrix
 import numpy as np
 
 def matrix_matrix_add(v, w, max_rank, eps):
-    if not v.children and not w.children and v.size == (1,1) and w.size == (1,1):
-        val_v = v.U[0,0]*v.D[0]*v.V[0,0] if v.rank > 0 else 0
-        val_w = w.U[0,0]*w.D[0]*w.V[0,0] if w.rank > 0 else 0
-        val = val_v + val_w
-        U = np.array([[val]])
-        D = np.array([1.0])
-        V = np.array([[1.0]])
-        return Node(1, (1,1), U, D, V)
-    
-    if not v.children and not w.children and v.rank == 0 and w.rank == 0:
-        return Node(0, v.size)
-    
-    if not v.children and not w.children and v.rank != 0 and w.rank != 0:
-        A = v.U @ np.diag(v.D) @ v.V
-        B = w.U @ np.diag(w.D) @ w.V
-        M = A + B
-        U, D, V = truncated_svd(M, max_rank + 1, eps)
-        return compress_matrix(M, U, D, V, max_rank, eps)
-    
+    if not v.children and not w.children:
+        if v.rank == 0 and w.rank == 0:
+            return Node(0, v.size)
+        elif v.size == (1,1) and w.size == (1,1):
+            val_v = v.U[0,0]*v.D[0]*v.V[0,0] if v.rank > 0 else 0
+            val_w = w.U[0,0]*w.D[0]*w.V[0,0] if w.rank > 0 else 0
+            val = val_v + val_w
+            U = np.array([[val]])
+            D = np.array([1.0])
+            V = np.array([[1.0]])
+            return Node(1, (1,1), U, D, V)
+        elif v.rank != 0 and w.rank != 0:
+            A = v.U @ np.diag(v.D) @ v.V
+            B = w.U @ np.diag(w.D) @ w.V
+            M = A + B
+            U, D, V = truncated_svd(M, max_rank + 1, eps)
+            return compress_matrix(M, U, D, V, max_rank, eps)
+            
     if v.children and w.children:
         Y = Node(0, v.size)
         for vc, wc in zip(v.children, w.children):
