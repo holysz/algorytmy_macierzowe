@@ -80,6 +80,8 @@ def compress_matrix(A, U, D, V, r, eps):
 
 def rebuild_matrix(node):
     if not node.children:
+        if node.rank == 0 or node.D.size == 0:
+            return np.zeros(node.size)
         return node.U @ np.diag(node.D) @ node.V
     
     return np.vstack((np.hstack((rebuild_matrix(node.children[0]), rebuild_matrix(node.children[1]))),

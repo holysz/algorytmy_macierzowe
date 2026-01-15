@@ -1,5 +1,5 @@
-from lab3.tree import Node, rebuild_matrix, truncated_svd, compress_matrix
-from lab4.matrix_matrix_add import matrix_matrix_add
+from tree import Node, rebuild_matrix, truncated_svd, compress_matrix
+from matrix_matrix_add import matrix_matrix_add
 import numpy as np
 
 def matrix_matrix_mult(v, w, max_rank, eps):

@@ -281,12 +281,5 @@ def test_hsv(img, max_rank, epsilon, singular=False):
 # img = Image.open("lab3/coffee.png")
 # img = img.convert('RGB')
 
-<<<<<<< HEAD
-coffee = np.asarray(img) / 255
-#test_rgb(coffee, 4, 2)
-
-test_hsv(coffee, 5, 2)
-=======
 # coffee = np.asarray(img) / 255
 # test_rgb(coffee, 4, 0.05)
->>>>>>> ff802cb23a4b309a2a782442a301bb2cf2c8a728

@@ -1,4 +1,4 @@
-from lab3.tree import Node, compress_matrix, truncated_svd, rebuild_matrix
+from tree import Node, compress_matrix, truncated_svd, rebuild_matrix
 import numpy as np
 
 def matrix_matrix_add(v, w, max_rank, eps):
