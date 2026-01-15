@@ -80,6 +80,8 @@ def compress_matrix(A, U, D, V, r, eps):
 
 def rebuild_matrix(node):
     if not node.children:
+        if node.rank == 0 or node.D.size == 0:
+            return np.zeros(node.size)
         return node.U @ np.diag(node.D) @ node.V
     
     return np.vstack((np.hstack((rebuild_matrix(node.children[0]), rebuild_matrix(node.children[1]))),
@@ -276,8 +278,8 @@ def test_hsv(img, max_rank, epsilon, singular=False):
         plt.show()
     
 
-img = Image.open("lab3/coffee.png")
-img = img.convert('RGB')
+# img = Image.open("lab3/coffee.png")
+# img = img.convert('RGB')
 
-coffee = np.asarray(img) / 255
-test_rgb(coffee, 4, 0.05)
+# coffee = np.asarray(img) / 255
+# test_rgb(coffee, 4, 0.05)
