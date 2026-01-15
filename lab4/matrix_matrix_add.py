@@ -20,7 +20,7 @@ def matrix_matrix_add(v, w, max_rank, eps):
             U, D, V = truncated_svd(M, max_rank + 1, eps)
             return compress_matrix(M, U, D, V, max_rank, eps)
             
-    if v.children and w.children:
+    elif v.children and w.children:
         Y = Node(0, v.size)
         for vc, wc in zip(v.children, w.children):
             Y.children.append(
@@ -28,7 +28,7 @@ def matrix_matrix_add(v, w, max_rank, eps):
             )
         return Y
     
-    if not v.children and w.children:
+    elif not v.children and w.children:
         mid_row = w.children[0].size[0]
         mid_col = w.children[0].size[1]
 
@@ -46,7 +46,7 @@ def matrix_matrix_add(v, w, max_rank, eps):
         ]
         return Y
     
-    if v.children and not w.children:
+    else:
         mid_row = v.children[0].size[0]
         mid_col = v.children[0].size[1]
 
