@@ -20,7 +20,7 @@ def demo(eps):
     for k in [2,3,4,5,6,7,8,9]:
         M = generate_matrix(k)
         X = generate_vector(k)
-        tree = create_tree(M, 4, eps=0.1)
+        tree = create_tree(M, 4, eps=0.5)
         if k> 4:
             draw(tree, M.shape)
         start_vec = monotonic()
