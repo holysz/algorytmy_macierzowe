@@ -274,12 +274,4 @@ def test_hsv(img, max_rank, epsilon, singular=False):
         plt.ylabel(r"$\sigma_k$")
         plt.tight_layout()
         plt.show()
-    
 
-img = Image.open("lab3/coffee.png")
-img = img.convert('RGB')
-
-coffee = np.asarray(img) / 255
-#test_rgb(coffee, 4, 2)
-
-test_hsv(coffee, 5, 2)
